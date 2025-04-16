@@ -1,0 +1,307 @@
+<!-- Save this as index.html or any .html file and open in browser -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zoho CRM Widget - WhatsApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Libraries -->
+  <script src="./lib/ZohoEmbededAppSDK.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/libphonenumber-js@1.10.21/bundle/libphonenumber-js.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+  <style>
+    :root {
+      --theme-color: #25D366;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+    }
+
+    body.neon-theme {
+      background: linear-gradient(135deg, #000000, #0f0c29);
+    }
+
+    body.neon-theme .card {
+      border: 2px solid #39ff14;
+      box-shadow: 0 0 20px #39ff14;
+    }
+
+    body.gradient-theme {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    }
+
+    .card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 95%;
+      max-width: 600px;
+      padding: 25px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+      z-index: 10;
+      box-sizing: border-box;
+    }
+
+    .form-control, textarea {
+      background-color: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      color: white;
+    }
+
+    .form-control::placeholder {
+      color: #ddd;
+    }
+
+    .btn-whatsapp {
+      background-color: var(--theme-color);
+      color: white;
+    }
+
+    .btn-whatsapp:hover {
+      background-color: #1da851;
+    }
+
+    .theme-switcher {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 99;
+    }
+
+    #particles-js {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    @media screen and (max-width: 576px) {
+      .card {
+        width: 95%;
+        padding: 20px 15px;
+      }
+    }
+  </style>
+</head>
+<body class="neon-theme">
+
+  <div id="particles-js"></div>
+
+  <div class="theme-switcher dropdown">
+    <button class="btn btn-outline-light dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+      <i class="bi bi-palette-fill"></i> Theme
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li><a class="dropdown-item" href="#" data-theme="neon-theme"><i class="bi bi-lightning-charge"></i> Neon</a></li>
+      <li><a class="dropdown-item" href="#" data-theme="gradient-theme"><i class="bi bi-stars"></i> Gradient</a></li>
+    </ul>
+  </div>
+
+  <div class="card" id="whatsapp-widget">
+    <h4 class="mb-3 text-center">Zoho CRM - WhatsApp Integration</h4>
+
+    <div class="mb-3">
+      <label class="form-label"><strong>WhatsApp Number:</strong></label>
+      <input type="text" id="whatsapp-number" class="form-control" readonly>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label"><strong>Message:</strong></label>
+      <textarea id="whatsapp-message" class="form-control" rows="4" placeholder="Type your message here...">Hello! I'm interested in your services.</textarea>
+    </div>
+
+    <button class="btn btn-whatsapp w-100 mb-2" onclick="sendWhatsAppMessage()">Send on WhatsApp</button>
+    <button class="btn btn-primary w-100" onclick="copyLinkToClipboard()">Copy WhatsApp Link</button>
+  </div>
+
+  <div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toastMessage" class="toast align-items-center text-white bg-success border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastText"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Particle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+
+  <script>
+    const TINYURL_API_KEY = "0Q61uZ99f2KlnpnGefkAUnV0WsSys9Xadmqy3QpGsE0VuXgVLrRlE3BdezEG";
+
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 60 },
+        color: { value: ["#ffffff", "#39ff14", "#25D366", "#1da851"] },
+        shape: { type: "circle" },
+        opacity: { value: 0.4 },
+        size: { value: 4 },
+        line_linked: {
+          enable: true,
+          distance: 120,
+          color: "#ffffff",
+          opacity: 0.3,
+          width: 1
+        },
+        move: {
+          enable: true,
+          speed: 2,
+          direction: "none"
+        }
+      },
+      interactivity: {
+        detect_on: "canvas",
+        events: {
+          onhover: { enable: true, mode: "grab" },
+          onclick: { enable: true, mode: "push" }
+        },
+        modes: {
+          grab: { distance: 200, line_linked: { opacity: 0.5 } },
+          push: { particles_nb: 4 }
+        }
+      },
+      retina_detect: true
+    });
+
+    $(".dropdown-item").on("click", function () {
+      const selectedTheme = $(this).data("theme");
+      document.body.className = selectedTheme;
+    });
+
+    if (!window.ZOHO_INITIALIZED) {
+      window.ZOHO_INITIALIZED = true;
+      ZOHO.embeddedApp.on("PageLoad", function (data) {
+        if (data?.Entity === "Leads" && data.EntityId?.length > 0) {
+          fetchLeadDetails(data.EntityId[0]);
+        }
+      });
+      ZOHO.embeddedApp.init();
+    }
+
+    function fetchLeadDetails(leadId) {
+      ZOHO.CRM.API.getRecord({
+        Entity: "Leads",
+        RecordID: leadId
+      }).then((response) => {
+        const leadData = response.data?.[0];
+        const phone = leadData?.Phone || leadData?.Mobile || "";
+        const formattedPhone = formatPhoneNumber(phone);
+        if (formattedPhone) {
+          document.getElementById("whatsapp-number").value = formattedPhone;
+        } else {
+          document.getElementById("whatsapp-number").value = "";
+        }
+      }).catch(() => {
+        document.getElementById("whatsapp-number").value = "Error fetching phone";
+      });
+    }
+
+    function formatPhoneNumber(phoneNumber) {
+      const phone = libphonenumber.parsePhoneNumberFromString(phoneNumber);
+      if (phone && phone.isValid()) {
+        return phone.number.replace('+', '');
+      } else {
+        showToast("Add country code in CRM phone field.");
+        return "";
+      }
+    }
+
+    function sendWhatsAppMessage() {
+      const phone = document.getElementById("whatsapp-number").value.trim();
+      const message = document.getElementById("whatsapp-message").value.trim();
+      if (!phone || phone === "Error fetching phone" || !message) {
+        showToast("Please provide a valid phone number and message.");
+        return;
+      }
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      shortenAndOpenURL(url);
+    }
+
+    function copyLinkToClipboard() {
+      const phone = document.getElementById("whatsapp-number").value.trim();
+      const message = document.getElementById("whatsapp-message").value.trim();
+      if (!phone || phone === "Error fetching phone" || !message) {
+        showToast("Please provide a valid phone number and message.");
+        return;
+      }
+      const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+      shortenAndCopyURL(url);
+    }
+
+    function shortenAndOpenURL(longUrl) {
+      fetch("https://api.tinyurl.com/create", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${TINYURL_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ url: longUrl, domain: "tinyurl.com" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.data?.tiny_url) {
+          window.open(data.data.tiny_url, "_blank");
+        } else {
+          showToast("Failed to shorten URL.");
+        }
+      })
+      .catch(() => {
+        showToast("Error occurred while shortening URL.");
+      });
+    }
+
+    function shortenAndCopyURL(longUrl) {
+      fetch("https://api.tinyurl.com/create", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${TINYURL_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ url: longUrl, domain: "tinyurl.com" })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.data?.tiny_url) {
+          navigator.clipboard.writeText(data.data.tiny_url).then(() => {
+            showToast("Shortened link copied to clipboard!");
+          }).catch(() => {
+            showToast("Error copying shortened link.");
+          });
+        } else {
+          showToast("Failed to shorten URL.");
+        }
+      })
+      .catch(() => {
+        showToast("Error occurred while shortening URL.");
+      });
+    }
+
+    function showToast(message) {
+      const toastText = document.getElementById("toastText");
+      toastText.innerText = message;
+      const toast = new bootstrap.Toast(document.getElementById("toastMessage"));
+      toast.show();
+    }
+  </script>
+</body>
+</html>
